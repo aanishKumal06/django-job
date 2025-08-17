@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Jobs - Mero Jobs{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-5">Browse Jobs</h1>
+        <p class="lead">Find your next opportunity</p>
+    </div>
+    <div class="col-md-4 d-flex justify-content-end align-items-center">
+        <form method="get" class="d-flex w-100">
+            <input type="text" name="search" class="form-control me-2" placeholder="Search jobs..." 
+                value="{{ request.GET.search|default:'' }}">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="d-flex align-items-center">
+            <span class="me-2">Filter by category:</span>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'jobs:job_list' %}" class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    All
+                </a>
+                {% for category in categories %}
+                <a href="{% url 'jobs:job_list' %}?category={{ category.id }}" 
+                   class="btn btn-sm {% if selected_category == category.id|stringformat:'i' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if jobs %}
+    <div class="row">
+        {% for job in jobs %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ job.title }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ job.category.name }}</h6>
+                        
+                        <div class="mb-3">
+                            {% if job.location %}
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="fas fa-map-marker-alt me-1"></i> {{ job.location }}
+                                </span>
+                            {% endif %}
+                            {% if job.salary %}
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="fas fa-money-bill-wave me-1"></i> ${{ job.salary }}
+                                </span>
+                            {% endif %}
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-user me-1"></i> {{ job.get_gender_display }}
+                            </span>
+                        </div>
+                        
+                        <p class="card-text text-truncate">{{ job.description }}</p>
+                    </div>
+                    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Posted by: {{ job.recruiter.get_full_name|default:job.recruiter.email }}</small>
+                        <a href="{% url 'jobs:job_detail' job.id %}" class="btn btn-sm btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+{% else %}
+    <div class="alert alert-info">
+        <p class="mb-0">No jobs found. {% if request.GET.search or request.GET.category %}Try adjusting your search criteria.{% endif %}</p>
+    </div>
+{% endif %}
+{% endblock %}
